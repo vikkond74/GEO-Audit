@@ -1,100 +1,67 @@
 import streamlit as st
 from google import genai
-from google.api_core import exceptions
 import time
 
 # --- APP CONFIG ---
-st.set_page_config(page_title="GEO Audit Suite 2026", layout="wide", page_icon="🎯")
-st.title("🎯 GEO Audit Suite 2026")
-st.markdown("Optimize your brand for the generative web: Share of Model, Semantic Gaps, and Technical Readiness.")
+st.set_page_config(page_title="GEO Business Intelligence", layout="centered", page_icon="🏢")
+st.title("🏢 GEO Brand Intelligence Dashboard")
+st.markdown("Enter your company name to see how AI search engines perceive your brand and where you stand against the competition.")
 
-# --- SECURE API KEY LOADING ---
+# --- SECURE API KEY ---
 try:
     api_key = st.secrets["GEMINI_API_KEY"]
 except KeyError:
-    st.error("Missing API Key! Add 'GEMINI_API_KEY' to Streamlit Secrets.")
+    st.error("Setup Error: Please add 'GEMINI_API_KEY' to your Streamlit Secrets.")
     st.stop()
 
 client = genai.Client(api_key=api_key)
 
-# --- CORE LOGIC: RETRY WRAPPER ---
-def run_ai_query(prompt):
-    """Resilient API call for Gemini 2.5 Flash."""
-    max_retries = 3
-    for i in range(max_retries):
-        try:
-            # Using 2.5 Flash for the 2026 stable environment
-            return client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=prompt
-            )
-        except Exception as e:
-            if "429" in str(e):
-                time.sleep((i + 1) * 5)
-            else:
-                return f"Error: {e}"
-    return "Rate limit exceeded. Try again in a minute."
+# --- ONE BOX, ONE BUTTON ---
+company_name = st.text_input("What is your Company Name?", placeholder="e.g. Patagonia")
 
-# --- UI TABS ---
-tab1, tab2, tab3 = st.tabs(["🚀 Brand Audit & SoM", "🕳️ Semantic Gap Analysis", "🛠️ Technical Checklist"])
-
-with tab1:
-    st.header("Share of Model (SoM) Audit")
-    c1, c2 = st.columns(2)
-    with c1:
-        brand = st.text_input("Brand Name", placeholder="e.g. Acme Tech")
-    with c2:
-        comps = st.text_input("Competitors", placeholder="e.g. CompetitorA, CompetitorB")
-
-    if st.button("Generate Audit", type="primary"):
-        with st.spinner("Calculating Share of Model..."):
+if st.button("Run Full Brand Audit", type="primary"):
+    if not company_name:
+        st.warning("Please enter a name to begin.")
+    else:
+        with st.spinner(f"Analyzing {company_name} and identifying key market rivals..."):
+            
+            # The prompt now forces the AI to pick competitors and explain things simply
             prompt = f"""
-            Perform a GEO Audit for '{brand}' vs '{comps}'.
-            1. **Share of Model (SoM) Score:** Assign a score from 0-100 for each based on AI citation frequency.
-            2. **Perception Audit:** How does the LLM describe the brand's unique value?
-            3. **Citation Authority:** List the top 3 domains the AI uses to verify this brand.
-            Return in a clean Markdown format with a table for SoM.
+            Act as a Senior Business Strategist. Perform a GEO (Generative Engine Optimization) Audit for '{company_name}'.
+            
+            FIRST: Identify the 3 most likely business competitors for '{company_name}' based on current market data.
+            
+            SECOND: Provide a report with the following sections. Use business terms, avoid technical jargon.
+            
+            1. **Share of Model (AI Market Share):** - Explain: This is how often AI 'thinks' of you versus your rivals.
+               - Provide a simple table with a score (1-100) for {company_name} and the 3 competitors.
+            
+            2. **Brand Reputation & Perception:** - Explain: This is the 'personality' AI gives your brand when answering customer questions.
+               - Summarize how the AI describes {company_name}.
+            
+            3. **The Opportunity Gap:** - Explain: These are the specific topics or strengths your competitors are 'winning' in AI conversations.
+               - List 3 specific things {company_name} should talk about more to steal AI citations.
+            
+            4. **AI-Readiness Checklist:** - Explain: Simple fixes to make your website easier for AI to read.
+               - Provide 3 bullet points of simple, non-technical advice.
             """
-            result = run_ai_query(prompt)
-            st.markdown(result.text if hasattr(result, 'text') else result)
-
-with tab2:
-    st.header("Semantic & Topic Gap Analysis")
-    st.info("Uncover the specific topics your competitors 'own' in AI summaries that you are missing.")
-    
-    if st.button("Analyze Content Gaps"):
-        if not brand or not comps:
-            st.warning("Please fill in brand and competitors in Tab 1 first.")
-        else:
-            with st.spinner("Finding information gaps..."):
-                prompt = f"""
-                Analyze the 'Semantic Space' of {brand} compared to {comps}.
-                Identify 5 specific 'Topic Gaps'—factual areas or statistics where competitors are cited but {brand} is not.
-                Provide a specific 'Citation Hook' for each gap (a sentence the brand should add to its site to be cited).
-                """
-                gap_result = run_ai_query(prompt)
-                st.markdown(gap_result.text if hasattr(gap_result, 'text') else gap_result)
-
-with tab3:
-    st.header("Technical AI-Readiness Checklist")
-    st.write("Does your site meet the 2026 technical standards for AI crawlers?")
-    
-    # These are the 3 key technical signals for 2026
-    col_a, col_b = st.columns(2)
-    with col_a:
-        st.checkbox("LLMS.txt file present in root directory", help="A markdown file specifically for AI agent guidance.")
-        st.checkbox("Author Schema (E-E-A-T) connected to Person entities", help="Proves content is human-expert verified.")
-        st.checkbox("Nested Product/FAQ Schema", help="Allows RAG systems to parse data without 'guessing'.")
-    with col_b:
-        st.checkbox("Zero-Javascript Content accessible", help="Ensures LLM crawlers see content without rendering JS.")
-        st.checkbox("Fact-Density > 60%", help="High info-to-fluff ratio for better summarization.")
-        
-    st.divider()
-    st.subheader("Action Plan")
-    if st.button("Generate Technical Roadmap"):
-        roadmap_prompt = f"Create a technical GEO roadmap for {brand} to implement llms.txt and Author Schema."
-        roadmap = run_ai_query(roadmap_prompt)
-        st.markdown(roadmap.text if hasattr(roadmap, 'text') else roadmap)
+            
+            try:
+                response = client.models.generate_content(
+                    model="gemini-2.0-flash",
+                    contents=prompt
+                )
+                
+                # --- DISPLAY EVERYTHING IN ONE FLOW ---
+                st.success("Audit Complete")
+                st.divider()
+                st.markdown(response.text)
+                
+                # Simple export
+                st.download_button("Download Executive Summary", response.text, file_name=f"{company_name}_GEO_Audit.md")
+                
+            except Exception as e:
+                st.error(f"Analysis interrupted: {e}")
 
 st.divider()
-st.caption("GEO Audit Suite • Gemini 2.5 Flash Stable • v2.1 (2026)")
+st.info("**What is GEO?** In simple terms, it's the new SEO. Instead of ranking on page 1 of Google, GEO ensures that when someone asks ChatGPT or Gemini a question, your brand is the one the AI recommends.")
