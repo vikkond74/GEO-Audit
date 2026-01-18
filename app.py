@@ -1,67 +1,52 @@
 import streamlit as st
-from google import genai
-import time
+from openai import OpenAI # Perplexity uses the OpenAI-compatible format
 
 # --- APP CONFIG ---
-st.set_page_config(page_title="GEO Business Intelligence", layout="centered", page_icon="🏢")
+st.set_page_config(page_title="GEO Brand Intelligence", layout="centered", page_icon="🏢")
 st.title("🏢 GEO Brand Intelligence Dashboard")
-st.markdown("Enter your company name to see how AI search engines perceive your brand and where you stand against the competition.")
+st.markdown("Discover how AI search engines recommend your brand to customers using real-time Perplexity data.")
 
 # --- SECURE API KEY ---
 try:
-    api_key = st.secrets["GEMINI_API_KEY"]
+    api_key = st.secrets["PERPLEXITY_API_KEY"]
 except KeyError:
-    st.error("Setup Error: Please add 'GEMINI_API_KEY' to your Streamlit Secrets.")
+    st.error("Setup Error: Please add 'PERPLEXITY_API_KEY' to your Streamlit Secrets.")
     st.stop()
 
-client = genai.Client(api_key=api_key)
+# Perplexity uses the OpenAI client pointed to their URL
+client = OpenAI(api_key=api_key, base_url="https://api.perplexity.ai")
 
-# --- ONE BOX, ONE BUTTON ---
 company_name = st.text_input("What is your Company Name?", placeholder="e.g. Patagonia")
 
-if st.button("Run Full Brand Audit", type="primary"):
+if st.button("Run Executive Audit", type="primary"):
     if not company_name:
-        st.warning("Please enter a name to begin.")
+        st.warning("Please enter a name.")
     else:
-        with st.spinner(f"Analyzing {company_name} and identifying key market rivals..."):
+        with st.spinner(f"Perplexity is scanning the live web for {company_name}..."):
             
-            # The prompt now forces the AI to pick competitors and explain things simply
             prompt = f"""
-            Act as a Senior Business Strategist. Perform a GEO (Generative Engine Optimization) Audit for '{company_name}'.
+            Identify the top 3 competitors for '{company_name}'.
+            Then, provide a GEO (Generative Engine Optimization) report in simple business terms:
             
-            FIRST: Identify the 3 most likely business competitors for '{company_name}' based on current market data.
-            
-            SECOND: Provide a report with the following sections. Use business terms, avoid technical jargon.
-            
-            1. **Share of Model (AI Market Share):** - Explain: This is how often AI 'thinks' of you versus your rivals.
-               - Provide a simple table with a score (1-100) for {company_name} and the 3 competitors.
-            
-            2. **Brand Reputation & Perception:** - Explain: This is the 'personality' AI gives your brand when answering customer questions.
-               - Summarize how the AI describes {company_name}.
-            
-            3. **The Opportunity Gap:** - Explain: These are the specific topics or strengths your competitors are 'winning' in AI conversations.
-               - List 3 specific things {company_name} should talk about more to steal AI citations.
-            
-            4. **AI-Readiness Checklist:** - Explain: Simple fixes to make your website easier for AI to read.
-               - Provide 3 bullet points of simple, non-technical advice.
+            1. Share of Model: A table (0-100) showing how likely you are to be recommended vs rivals.
+            2. AI Perception: How does the AI describe your brand's reputation to a user?
+            3. The Opportunity Gap: 3 topics your competitors 'own' that you should claim.
+            4. 3 Simple Website Fixes: Non-technical advice to get cited more.
             """
             
             try:
-                response = client.models.generate_content(
-                    model="gemini-2.0-flash",
-                    contents=prompt
+                # 'sonar-pro' is the standard for high-quality search results
+                response = client.chat.completions.create(
+                    model="sonar-pro",
+                    messages=[{"role": "user", "content": prompt}]
                 )
                 
-                # --- DISPLAY EVERYTHING IN ONE FLOW ---
-                st.success("Audit Complete")
+                st.success("Real-time Audit Complete")
                 st.divider()
-                st.markdown(response.text)
-                
-                # Simple export
-                st.download_button("Download Executive Summary", response.text, file_name=f"{company_name}_GEO_Audit.md")
+                st.markdown(response.choices[0].message.content)
                 
             except Exception as e:
-                st.error(f"Analysis interrupted: {e}")
+                st.error(f"Analysis failed: {e}")
 
 st.divider()
-st.info("**What is GEO?** In simple terms, it's the new SEO. Instead of ranking on page 1 of Google, GEO ensures that when someone asks ChatGPT or Gemini a question, your brand is the one the AI recommends.")
+st.info("**Why Perplexity?** Because you have Pro, this tool uses real-time search data and 'Sonar' models, which are more accurate for competitive brand tracking than standard AI.")
