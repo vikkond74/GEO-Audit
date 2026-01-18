@@ -1,14 +1,13 @@
 import streamlit as st
 from google import genai
-import os
+from google.api_core import exceptions
+import time
 
 # --- APP CONFIG ---
 st.set_page_config(page_title="GEO Audit Pro", layout="wide", page_icon="🚀")
-st.title("🚀 Generative Engine Optimization (GEO) Audit")
+st.title("🚀 GEO Audit Pro (Resilient Edition)")
 
 # --- SECURE API KEY LOADING ---
-# If running locally, Streamlit looks in .streamlit/secrets.toml
-# If running on Streamlit Cloud, it looks in the dashboard "Secrets" section
 try:
     api_key = st.secrets["GEMINI_API_KEY"]
 except KeyError:
@@ -17,6 +16,31 @@ except KeyError:
 
 # Initialize the Gemini Client
 client = genai.Client(api_key=api_key)
+
+# --- HELPER FUNCTION: RETRY LOGIC ---
+def generate_with_retry(prompt, model_name="gemini-1.5-flash"):
+    """Attempts to call the API with a simple backoff if rate limited."""
+    max_retries = 3
+    for i in range(max_retries):
+        try:
+            # Using the lighter 1.5 Flash model
+            return client.models.generate_content(
+                model=model_name, 
+                contents=prompt
+            )
+        except Exception as e:
+            # Check for the 429 Error
+            if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                if i < max_retries - 1:
+                    wait_time = (i + 1) * 3  # Waits 3s, then 6s
+                    st.warning(f"AI is busy (Rate Limit). Retrying in {wait_time}s...")
+                    time.sleep(wait_time)
+                else:
+                    st.error("Daily quota reached. Please try again tomorrow or upgrade to a paid API key.")
+                    return None
+            else:
+                st.error(f"An unexpected error occurred: {e}")
+                return None
 
 # --- INPUT SECTION ---
 with st.container():
@@ -29,35 +53,23 @@ with st.container():
 # --- AUDIT LOGIC ---
 if st.button("Run GEO Audit", type="primary"):
     if not company_name:
-        st.warning("Please enter a company name to begin.")
+        st.warning("Please enter a company name.")
     else:
-        with st.spinner(f"AI is auditing {company_name}..."):
+        with st.spinner(f"AI is analyzing {company_name} (using 1.5 Flash)..."):
             prompt = f"""
-            Act as an expert in Generative Engine Optimization (GEO). 
-            Perform a detailed audit for the brand '{company_name}'.
-            Compare its AI-search presence against these competitors: {competitors}.
+            Act as a GEO (Generative Engine Optimization) expert.
+            Audit: '{company_name}'.
+            Competitors: {competitors}.
             
-            Provide a report with:
-            - **Brand Sentiment:** How AI models describe the brand.
-            - **Citation Profile:** Where is the AI getting its info? (Websites, Social, News).
-            - **GEO Score (1-100):** Based on AI visibility.
-            - **The 'Gap' Analysis:** What are competitors mentioned for that this brand is missing?
-            - **3 Immediate Actions:** Specific technical or content changes to rank higher in AI summaries.
+            1. Summarize the brand's visibility in AI search.
+            2. Identify 3 sources (websites/platforms) where the brand is strong.
+            3. Rank the brand against competitors {competitors} for 'AI authority'.
+            4. Suggest 3 content updates to increase the chance of AI citations.
             """
             
-            try:
-                # Using the latest Flash model for speed and efficiency
-                response = client.models.generate_content(
-                    model="gemini-2.0-flash", 
-                    contents=prompt
-                )
-                
+            response = generate_with_retry(prompt)
+            
+            if response:
                 st.success("Audit Complete!")
                 st.markdown("---")
                 st.markdown(response.text)
-                
-            except Exception as e:
-                st.error(f"An error occurred: {e}")
-
-# --- FOOTER ---
-st.caption("Powered by Gemini 2.0 Flash • Built for GEO Professionals")
