@@ -1,10 +1,10 @@
 import streamlit as st
-from openai import OpenAI # Perplexity uses the OpenAI-compatible format
+from openai import OpenAI
 
 # --- APP CONFIG ---
-st.set_page_config(page_title="GEO Brand Intelligence", layout="centered", page_icon="🏢")
-st.title("🏢 GEO Brand Intelligence Dashboard")
-st.markdown("Discover how AI search engines recommend your brand to customers using real-time Perplexity data.")
+st.set_page_config(page_title="Global GEO Intelligence", layout="centered", page_icon="🌍")
+st.title("🌍 Global GEO Intelligence Dashboard")
+st.markdown("Analyze your brand's standing in the **global** AI ecosystem.")
 
 # --- SECURE API KEY ---
 try:
@@ -13,40 +13,32 @@ except KeyError:
     st.error("Setup Error: Please add 'PERPLEXITY_API_KEY' to your Streamlit Secrets.")
     st.stop()
 
-# Perplexity uses the OpenAI client pointed to their URL
 client = OpenAI(api_key=api_key, base_url="https://api.perplexity.ai")
 
-company_name = st.text_input("What is your Company Name?", placeholder="e.g. Patagonia")
+# --- EXECUTIVE INPUT ---
+company_name = st.text_input("What is your Company Name?", placeholder="e.g. Siemens")
 
-if st.button("Run Executive Audit", type="primary"):
+# New: Regional focus to help the AI narrow down or expand its search
+region = st.selectbox("Primary Market Focus", ["Global (All Regions)", "Europe", "Asia-Pacific", "Americas", "Middle East & Africa"])
+
+if st.button("Run Global Audit", type="primary"):
     if not company_name:
-        st.warning("Please enter a name.")
+        st.warning("Please enter a company name.")
     else:
-        with st.spinner(f"Perplexity is scanning the live web for {company_name}..."):
+        with st.spinner(f"Scanning global market data for {company_name}..."):
             
+            # This prompt is re-engineered to ignore the US-default bias
             prompt = f"""
-            Identify the top 3 competitors for '{company_name}'.
-            Then, provide a GEO (Generative Engine Optimization) report in simple business terms:
+            Perform a GLOBAL GEO (Generative Engine Optimization) audit for '{company_name}'.
+            Target Market: {region}
             
-            1. Share of Model: A table (0-100) showing how likely you are to be recommended vs rivals.
-            2. AI Perception: How does the AI describe your brand's reputation to a user?
-            3. The Opportunity Gap: 3 topics your competitors 'own' that you should claim.
-            4. 3 Simple Website Fixes: Non-technical advice to get cited more.
-            """
+            STRICT RULES:
+            - Do not default to US-only competitors unless the brand is primarily US-based.
+            - Identify the top 3 rivals specifically within the {region} market.
+            - Search for citations in local and international business news (e.g., Financial Times, Nikkei, Reuters, BBC).
             
-            try:
-                # 'sonar-pro' is the standard for high-quality search results
-                response = client.chat.completions.create(
-                    model="sonar-pro",
-                    messages=[{"role": "user", "content": prompt}]
-                )
-                
-                st.success("Real-time Audit Complete")
-                st.divider()
-                st.markdown(response.choices[0].message.content)
-                
-            except Exception as e:
-                st.error(f"Analysis failed: {e}")
-
-st.divider()
-st.info("**Why Perplexity?** Because you have Pro, this tool uses real-time search data and 'Sonar' models, which are more accurate for competitive brand tracking than standard AI.")
+            Provide the report in simple business terms:
+            1. The Global Recommendation Race: A table (0-100) showing how likely AI is to suggest you vs your {region} rivals.
+            2. Regional Reputation: How does the AI describe your brand's presence in international markets?
+            3. The Global Opportunity Gap: Topics or regional trends your competitors 'own' that you should claim.
+            4.
