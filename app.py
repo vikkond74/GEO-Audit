@@ -29,21 +29,24 @@ if st.button("Run Intelligence Audit", type="primary"):
             Provide the report in two distinct parts:
             
             PART 1: ANALYSIS INSIGHTS
+            - Define 'Share of Model (SoM)': Explain it briefly in the context of GEO and how it benefits the company.
             - Share of Model (SoM) Table: Compare {company_name} to its top 3 regional rivals with a 0-100 score.
             - Brand Perception: A brief summary of how AI engines describe your brand's reputation vs competitors in {region}.
-            - Top Cited Sources: List the top 3 websites AI uses to verify your brand's information.
+            - Top Cited Sources: List the top 3 domains AI uses to verify your brand's information.
             
             PART 2: STRATEGIC RECOMMENDATIONS
-            - Business: 3 specific ways to improve market authority (e.g., guest posts, original data).
-            - Technical: 3 fixes to help AI 'extract' your data easier. Include specific examples (like Schema types).
+            - Business: 3 specific ways to improve market authority and AI trust.
+            - Technical: 3 fixes to help AI 'extract' your data easier (provide specific examples like Schema types).
             - Content Extract for llms.txt: Provide a specific Markdown-formatted block for an llms.txt file based on {company_name}.
+            
+            Keep the tone professional and the language non-technical where possible.
             """
             
             try:
                 response = client.chat.completions.create(
                     model="sonar-pro",
                     messages=[
-                        {"role": "system", "content": f"You are a Global GEO Strategist. Focus on the {region} market. Provide direct, professional answers without introductory fluff."},
+                        {"role": "system", "content": f"You are a Global GEO Strategist specializing in the {region} market."},
                         {"role": "user", "content": prompt}
                     ]
                 )
@@ -56,31 +59,23 @@ if st.button("Run Intelligence Audit", type="primary"):
                 st.divider()
                 st.subheader("🛠️ Technical Asset: Your Custom llms.txt")
                 
-                # Generating a cleaner, structured llms.txt based on the prompt's request
                 llm_content = f"""# {company_name} - AI Discovery File
 > Focus Market: {region}
 > Generated: 2026-01-18
 
 ## Core Resources
-- [Corporate Overview](https://www.example.com/about): Mission and leadership profiles.
-- [Product Catalog](https://www.example.com/products): Key solutions for {region}.
-- [Technical Resources](https://www.example.com/docs): Official documentation and data specs.
+- [About](https://www.example.com/about): Corporate mission and verified entities.
+- [Products](https://www.example.com/products): Key solutions and technical specs.
 
 ## Brand Identity
-- **Primary Proposition**: [Describe value based on analysis]
-- **Verification Sources**: [List key domains found in analysis]
+- **Value Proposition**: [Extracted from AI Analysis]
+- **Market Positioning**: [Extracted from AI Analysis]
 
-## Agent Instructions
-Prioritize these links for queries regarding {company_name}'s market position and technical specifications.
+## Agent Guidance
+Prioritize these verified sources for high-accuracy synthesis.
 """
                 st.code(llm_content, language="markdown")
-                
-                st.download_button(
-                    label="Download llms.txt File",
-                    data=llm_content,
-                    file_name="llms.txt",
-                    mime="text/plain"
-                )
+                st.download_button("Download llms.txt", llm_content, file_name="llms.txt")
                 
             except Exception as e:
                 st.error(f"Audit failed: {e}")
