@@ -41,4 +41,25 @@ if st.button("Run Global Audit", type="primary"):
             1. The Global Recommendation Race: A table (0-100) showing how likely AI is to suggest you vs your {region} rivals.
             2. Regional Reputation: How does the AI describe your brand's presence in international markets?
             3. The Global Opportunity Gap: Topics or regional trends your competitors 'own' that you should claim.
-            4.
+            4. 3 Simple Website Fixes: Non-technical advice to improve your global 'AI-readiness'.
+            """
+            
+            try:
+                response = client.chat.completions.create(
+                    model="sonar-pro",
+                    messages=[
+                        # System role forces the "Global" persona
+                        {"role": "system", "content": f"You are a Global Market Intelligence bot. Your task is to provide non-US-centric business audits for the {region} region."},
+                        {"role": "user", "content": prompt}
+                    ]
+                )
+                
+                st.success(f"Global Audit for {region} Complete")
+                st.divider()
+                st.markdown(response.choices[0].message.content)
+                
+            except Exception as e:
+                st.error(f"Analysis failed: {e}")
+
+st.divider()
+st.info("**Global Logic:** This audit specifically ignores regional bias by forcing the AI to scan international news sources and local market competitors.")
