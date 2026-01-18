@@ -4,11 +4,16 @@ from google.api_core import exceptions
 import time
 
 # --- APP CONFIG ---
-st.set_page_config(page_title="GEO Audit Pro", layout="wide", page_icon="🚀")
-st.title("🚀 GEO Audit Pro (Resilient Edition)")
+st.set_page_config(page_title="GEO Audit Pro", layout="wide", page_icon="📈")
+st.title("📈 Generative Engine Optimization (GEO) Audit")
+st.markdown("""
+Analyze how AI models perceive your brand compared to competitors. 
+*Powered by Gemini 2.5 Flash.*
+""")
 
 # --- SECURE API KEY LOADING ---
 try:
+    # This pulls from 'Secrets' in Streamlit Cloud or .streamlit/secrets.toml locally
     api_key = st.secrets["GEMINI_API_KEY"]
 except KeyError:
     st.error("Missing API Key! Please add 'GEMINI_API_KEY' to your Streamlit Secrets.")
@@ -18,58 +23,72 @@ except KeyError:
 client = genai.Client(api_key=api_key)
 
 # --- HELPER FUNCTION: RETRY LOGIC ---
-def generate_with_retry(prompt, model_name="gemini-1.5-flash"):
-    """Attempts to call the API with a simple backoff if rate limited."""
+def generate_geo_audit(brand, comps):
+    """Calls Gemini 2.5 Flash with retry logic for stability."""
+    model_id = "gemini-2.5-flash" 
+    
+    prompt = f"""
+    You are a specialist in Generative Engine Optimization (GEO). 
+    Perform a competitive audit for the brand: {brand}
+    Compare it against: {comps}
+    
+    Structure the report with these sections:
+    1. **AI Visibility Score:** A 1-100 rating of the brand's presence in LLM training data and real-time retrieval.
+    2. **Citation Source Analysis:** Where does the AI pull information from (e.g., Reddit, Wikipedia, Official Site)?
+    3. **Sentiment & Perception:** How does the AI describe this brand's reputation?
+    4. **Competitive Ranking:** A table ranking {brand} and {comps} on 'AI Cite-ability'.
+    5. **Actionable Recommendations:** 5 specific content or technical SEO changes to improve GEO.
+    """
+
     max_retries = 3
     for i in range(max_retries):
         try:
-            # Using the lighter 1.5 Flash model
-            return client.models.generate_content(
-                model=model_name, 
+            response = client.models.generate_content(
+                model=model_id,
                 contents=prompt
             )
+            return response.text
         except Exception as e:
-            # Check for the 429 Error
-            if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+            err_str = str(e)
+            if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
                 if i < max_retries - 1:
-                    wait_time = (i + 1) * 3  # Waits 3s, then 6s
-                    st.warning(f"AI is busy (Rate Limit). Retrying in {wait_time}s...")
-                    time.sleep(wait_time)
+                    wait = (i + 1) * 5
+                    st.warning(f"Rate limit hit. Retrying in {wait}s...")
+                    time.sleep(wait)
                 else:
-                    st.error("Daily quota reached. Please try again tomorrow or upgrade to a paid API key.")
-                    return None
+                    return "Error: Daily API quota exceeded. Please try again later."
+            elif "404" in err_str:
+                return f"Error: Model '{model_id}' not found. Please verify the model ID."
             else:
-                st.error(f"An unexpected error occurred: {e}")
-                return None
+                return f"Unexpected API Error: {e}"
 
-# --- INPUT SECTION ---
+# --- UI LAYOUT ---
 with st.container():
     col1, col2 = st.columns(2)
     with col1:
-        company_name = st.text_input("Your Company Name", placeholder="e.g. Acme SaaS")
+        company_name = st.text_input("Brand to Audit", placeholder="e.g. Nike")
     with col2:
-        competitors = st.text_input("Competitors (comma separated)", placeholder="e.g. Comp1, Comp2, Comp3")
+        competitors = st.text_input("Competitors", placeholder="e.g. Adidas, Reebok, Puma")
 
-# --- AUDIT LOGIC ---
-if st.button("Run GEO Audit", type="primary"):
+if st.button("Generate GEO Report", type="primary"):
     if not company_name:
-        st.warning("Please enter a company name.")
+        st.warning("Please enter a brand name.")
     else:
-        with st.spinner(f"AI is analyzing {company_name} (using 1.5 Flash)..."):
-            prompt = f"""
-            Act as a GEO (Generative Engine Optimization) expert.
-            Audit: '{company_name}'.
-            Competitors: {competitors}.
+        with st.spinner("AI is crawling semantic patterns and auditing visibility..."):
+            report = generate_geo_audit(company_name, competitors)
             
-            1. Summarize the brand's visibility in AI search.
-            2. Identify 3 sources (websites/platforms) where the brand is strong.
-            3. Rank the brand against competitors {competitors} for 'AI authority'.
-            4. Suggest 3 content updates to increase the chance of AI citations.
-            """
+            st.markdown("---")
+            st.subheader(f"GEO Report: {company_name}")
+            st.markdown(report)
             
-            response = generate_with_retry(prompt)
-            
-            if response:
-                st.success("Audit Complete!")
-                st.markdown("---")
-                st.markdown(response.text)
+            # Allow user to download the report
+            st.download_button(
+                label="Download Report as Text",
+                data=report,
+                file_name=f"GEO_Audit_{company_name}.txt",
+                mime="text/plain"
+            )
+
+# --- FOOTER ---
+st.divider()
+st.caption("GEO Audit Pro v2.0 • 2026 Edition")
