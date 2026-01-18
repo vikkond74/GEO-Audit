@@ -22,28 +22,28 @@ if st.button("Run Intelligence Audit", type="primary"):
     if not company_name:
         st.warning("Please enter a name.")
     else:
-        with st.spinner(f"Gathering global insights for {company_name}..."):
+        with st.spinner(f"Analyzing global footprint for {company_name}..."):
             
             prompt = f"""
             Analyze '{company_name}' for the '{region}' market. 
-            Provide a two-part report in simple business terms:
+            Provide the report in two distinct parts:
             
-            ### PART 1: STRATEGIC INSIGHTS
-            - **What is Share of Model (SoM)?**: Explain this metric simply (how it's derived and its business benefit).
-            - **The Competitive Race**: A table (0-100) comparing {company_name} to its top 3 regional rivals.
-            - **Global Brand Perception**: How does AI describe your reputation in {region} vs rivals?
+            PART 1: ANALYSIS INSIGHTS
+            - Share of Model (SoM) Table: Compare {company_name} to its top 3 regional rivals with a 0-100 score.
+            - Brand Perception: A brief summary of how AI engines describe your brand's reputation vs competitors in {region}.
+            - Top Cited Sources: List the top 3 websites AI uses to verify your brand's information.
             
-            ### PART 2: STRATEGIC RECOMMENDATIONS
-            - **Business Strategy**: 3 ways to improve market authority and AI trust.
-            - **Technical Implementation**: 3 non-technical fixes (e.g., Schema) with clear examples.
-            - **The LLM.txt Roadmap**: Specific content suggestions for an llms.txt file based on {company_name}'s global profile.
+            PART 2: STRATEGIC RECOMMENDATIONS
+            - Business: 3 specific ways to improve market authority (e.g., guest posts, original data).
+            - Technical: 3 fixes to help AI 'extract' your data easier. Include specific examples (like Schema types).
+            - Content Extract for llms.txt: Provide a specific Markdown-formatted block for an llms.txt file based on {company_name}.
             """
             
             try:
                 response = client.chat.completions.create(
                     model="sonar-pro",
                     messages=[
-                        {"role": "system", "content": f"You are a Global GEO Strategist. Avoid US-bias. Focus on business outcomes in {region}."},
+                        {"role": "system", "content": f"You are a Global GEO Strategist. Focus on the {region} market. Provide direct, professional answers without introductory fluff."},
                         {"role": "user", "content": prompt}
                     ]
                 )
@@ -52,31 +52,26 @@ if st.button("Run Intelligence Audit", type="primary"):
                 st.success("Audit Complete")
                 st.markdown(report_text)
                 
-                # --- LLMS.TXT GENERATOR ---
+                # --- LLMS.TXT DOWNLOADABLE ASSET ---
                 st.divider()
                 st.subheader("🛠️ Technical Asset: Your Custom llms.txt")
-                st.markdown("""
-                **What is this?** In 2026, AI agents (like ChatGPT or Perplexity) look for a file at `yourdomain.com/llms.txt`. 
-                It acts as a 'fast-track' for AI to understand your business without getting lost in your website's design.
-                """)
                 
-                # Logic to "Build" the extract based on AI findings
-                llm_content = f"""# {company_name} - AI Resource Map
-> Primary Market: {region}
-> Purpose: Official brand data for AI synthesis and discovery.
+                # Generating a cleaner, structured llms.txt based on the prompt's request
+                llm_content = f"""# {company_name} - AI Discovery File
+> Focus Market: {region}
+> Generated: 2026-01-18
 
-## Executive Summary
-{company_name} is a leading provider in the {region} market, recognized by AI models for expertise in its sector.
+## Core Resources
+- [Corporate Overview](https://www.example.com/about): Mission and leadership profiles.
+- [Product Catalog](https://www.example.com/products): Key solutions for {region}.
+- [Technical Resources](https://www.example.com/docs): Official documentation and data specs.
 
-## Verified Links for AI Retrieval
-- /about-us : Core mission and leadership entities.
-- /products : Technical specifications for global solutions.
-- /investors : Financial authority and stability signals.
+## Brand Identity
+- **Primary Proposition**: [Describe value based on analysis]
+- **Verification Sources**: [List key domains found in analysis]
 
-## Technical Context
-- Authoritative Entity: {company_name}
-- Industry Classification: [Extracted from AI Analysis]
-- Key Differentiator: [Unique Value Proposition found by Perplexity]
+## Agent Instructions
+Prioritize these links for queries regarding {company_name}'s market position and technical specifications.
 """
                 st.code(llm_content, language="markdown")
                 
