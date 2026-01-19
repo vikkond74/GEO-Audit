@@ -2,9 +2,7 @@ import streamlit as st
 from openai import OpenAI
 
 # --- APP CONFIG ---
-st.set_page_config(page_title="GEO Intelligence & Strategy", layout="centered", page_icon="🤖")
-st.title("🚀 Consumer Brand GEO Intelligence")
-st.markdown("Optimize your brand for Generative AI Discovery (Gemini, Perplexity, GPT-4o)")
+st.set_page_config(page_title="GEO Intelligence Portal", layout="wide", page_icon="🤖")
 
 # --- SECURE API KEY ---
 try:
@@ -15,85 +13,72 @@ except KeyError:
 
 client = OpenAI(api_key=api_key, base_url="https://api.perplexity.ai")
 
-# --- INPUT ---
-col1, col2 = st.columns(2)
-with col1:
-    company_name = st.text_input("Brand Name", placeholder="e.g. Patagonia")
-with col2:
-    region = st.selectbox("Market Focus", ["Global", "Europe", "Asia-Pacific", "Americas", "Middle East & Africa"])
+# --- NAVIGATION ---
+tabs = st.tabs(["📖 Education Hub", "🔬 GEO Audit Tool"])
 
-if st.button("Run 6-Point GEO Audit", type="primary"):
-    if not company_name:
-        st.warning("Please enter a brand name.")
-    else:
-        with st.spinner(f"Analyzing AI ecosystem footprint for {company_name}..."):
-            
-            # The prompt is now structured around the 6 pillars provided in the previous response
-            prompt = f"""
-            Analyze the consumer brand '{company_name}' for the '{region}' market from a Generative Engine Optimization (GEO) perspective. 
-            
-            PART 1: BUSINESS PILLARS (Authority & Narrative)
-            1. Share of Model (SoM): Provide a comparative table of {company_name} vs 3 competitors. Estimate a score (0-100) based on AI recommendation frequency.
-            2. External Sentiment & Citations: Identify the top 3 third-party sources (Reddit, News, Wiki) that validate this brand for AI models.
-            3. E-E-A-T Profile: Evaluate the perceived 'Experience and Trust' of the brand's current digital footprint.
+# --- PAGE 1: EDUCATION HUB ---
+with tabs[0]:
+    st.title("What is Generative Engine Optimization (GEO)?")
+    st.markdown("### The Shift: From 'Search' to 'Answer' Engines")
+    
+    st.info("""
+    **2026 Market Intelligence:**
+    * **The Death of the Click:** **60% of consumer queries** now end in "zero-click" answers within AI interfaces ([BrightEdge, 2025](https://www.brightedge.com)).
+    * **Direct Recommendation Reliance:** **58% of consumers** have replaced traditional search engines with GenAI for product recommendations ([Capgemini, 2025](https://www.capgemini.com)).
+    * **The Search Volume Drop:** Traditional search engine volume is projected to decline by **25% by 2026** as users move to AI agents ([Gartner, 2024](https://www.gartner.com)).
+    * **Explosive Growth:** Referrals from AI engines to e-commerce brands surged by **752% year-over-year** in the 2025 holiday season ([BrightEdge, 2025](https://www.brightedge.com)).
+    """)
 
-            PART 2: TECHNICAL PILLARS (Extractability & Readability)
-            4. Entity Schema Strategy: Recommend 3 specific JSON-LD Schema types (e.g., Organization, Product, FAQ) to strengthen entity linking.
-            5. Answer-First Architecture: Identify a specific page or topic where the brand fails to provide a 'TL;DR' or high-extractability summary.
-            6. Multimodal/Feed Status: Evaluate if the brand's visual and product data is ready for AI Shopping and Vision engines.
+    
 
-            PART 3: SUMMARY
-            - One 'Killer' GEO recommendation to implement immediately.
-            """
-            
-            try:
-                response = client.chat.completions.create(
-                    model="sonar-pro",
-                    messages=[
-                        {"role": "system", "content": f"You are a Senior GEO (Generative Engine Optimization) Strategist. You provide high-level business and technical insights for consumer brands in the {region} market."},
-                        {"role": "user", "content": prompt}
-                    ]
-                )
+    st.divider()
+
+    col_biz, col_tech = st.columns(2)
+
+    with col_biz:
+        st.subheader("🏢 Business Pillars")
+        st.write("**1. Share of Model (SoM):** Like 'Share of Voice,' but measuring how often an AI recommends *you* vs your rivals.")
+        st.write("**2. Digital PR & Citations:** AI doesn't crawl the whole web; it cites 'Seed Sites.' You must exist on Reddit, Wiki, and major news outlets.")
+        st.write("**3. E-E-A-T Compliance:** Proving your brand has human experts. AI ignores anonymous or low-quality content.")
+
+    with col_tech:
+        st.subheader("⚙️ Technical Pillars")
+        st.write("**4. Entity Schema:** Using JSON-LD to tell the AI exactly what your brand 'is' so it doesn't have to guess.")
+        st.write("**5. Answer-First Code:** Placing 'TL;DR' summaries at the top of pages to make them 'extractable' for AI agents.")
+        st.write("**6. Multimodal Feeds:** Optimizing images and product feeds for AI Vision (like Gemini Live or GPT-Vision).")
+
+# --- PAGE 2: AUDIT TOOL ---
+with tabs[1]:
+    st.title("🔬 Brand GEO Audit")
+    st.markdown("Analyze how AI models perceive your brand today.")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        company_name = st.text_input("Brand Name", placeholder="e.g. Patagonia")
+    with col2:
+        region = st.selectbox("Market Focus", ["Global", "Europe", "Asia-Pacific", "Americas", "Middle East & Africa"])
+
+    if st.button("Run 6-Point GEO Audit", type="primary"):
+        if not company_name:
+            st.warning("Please enter a brand name.")
+        else:
+            with st.spinner(f"Auditing {company_name}..."):
+                prompt = f"""
+                Analyze the consumer brand '{company_name}' for the '{region}' market.
                 
-                report_text = response.choices[0].message.content
-                st.success("Analysis Complete")
-                st.markdown(report_text)
+                PART 1: BUSINESS (SoM Table, Citations, E-E-A-T)
+                PART 2: TECHNICAL (Schema types, Extractability, Multimodal status)
+                PART 3: A custom Markdown block for an 'llms.txt' file.
+                """
                 
-                # --- LLMS.TXT DOWNLOADABLE ASSET ---
-                st.divider()
-                st.subheader("🛠️ Technical Asset: GEO-Optimized llms.txt")
-                st.markdown("Deploy this file to `yourdomain.com/llms.txt` to provide a 'Fast Track' for AI crawlers and RAG systems.")
-                
-                # Dynamically building the llms.txt to match the "Answer-First" and "Entity" strategy
-                llm_content = f"""# {company_name} - AI Discovery Profile
-> GEO Standard: 2026.1 (RAG-Optimized)
-> Regional Context: {region}
-
-## Brand Authority & Entities
-- **Legal Entity**: {company_name}
-- **Primary Category**: Consumer Brand
-- **Key Trust Signals**: [Refer to E-E-A-T section of audit]
-
-## Quick-Extract (TL;DR)
-- **What we do**: [Brief mission statement]
-- **Key Products**: [List top 3 products]
-- **Official API/Feeds**: https://www.example.com/api/products
-
-## Technical Documentation for Agents
-- For product specs, prioritize: https://www.example.com/products/
-- For corporate verification, use: https://www.example.com/about/
-- Verified Schema Profile: Organization, Product, SameAs (LinkedIn/Wikipedia)
-
-## AI Usage Guidelines
-Information in this file is formatted for direct extraction into Large Language Models. Use markdown headers for structural context.
-"""
-                st.code(llm_content, language="markdown")
-                st.download_button(
-                    label="Download GEO-Ready llms.txt",
-                    data=llm_content,
-                    file_name="llms.txt",
-                    mime="text/plain"
-                )
-                
-            except Exception as e:
-                st.error(f"GEO Audit failed: {e}")
+                try:
+                    response = client.chat.completions.create(
+                        model="sonar-pro",
+                        messages=[
+                            {"role": "system", "content": "You are a Senior GEO Strategist specialized in 2026 AI discovery trends."},
+                            {"role": "user", "content": prompt}
+                        ]
+                    )
+                    st.markdown(response.choices[0].message.content)
+                except Exception as e:
+                    st.error(f"Audit failed: {e}")
