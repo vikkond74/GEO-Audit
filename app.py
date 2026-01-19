@@ -1,72 +1,99 @@
 import streamlit as st
+from openai import OpenAI
 import pandas as pd
 
 # --- APP CONFIG ---
 st.set_page_config(page_title="GEO Intelligence Portal", layout="wide", page_icon="🤖")
 
-# Navigation Sidebar to ensure decoupling
-page = st.sidebar.radio("Navigate", ["📖 Education Hub", "🔬 Brand Audit Tool"])
+# --- SECURE API KEY ---
+try:
+    api_key = st.secrets["PERPLEXITY_API_KEY"]
+except KeyError:
+    st.error("Setup Error: Please add 'PERPLEXITY_API_KEY' to your Streamlit Secrets.")
+    st.stop()
+
+client = OpenAI(api_key=api_key, base_url="https://api.perplexity.ai")
+
+# --- NAVIGATION ---
+# Decoupling the Education Hub from the Audit Tool via a Sidebar
+page = st.sidebar.radio("Navigation", ["📖 Education Hub", "🔬 Brand Audit Tool"])
 
 # --- PAGE 1: EDUCATION HUB ---
 if page == "📖 Education Hub":
     st.title("The 2026 GEO Whitepaper")
-    st.subheader("Understanding Generative Engine Optimization")
+    st.markdown("### Why Generative Engine Optimization (GEO) is Non-Negotiable")
     
-    st.markdown("""
-    Generative Engine Optimization (GEO) is the evolution of Search. In 2026, brands no longer compete 
-    just for a **ranking position** on a page; they compete to be the **cited source** inside an 
-    AI's generated response. 
+    st.info("""
+    **The 2026 Landscape:**
+    Search has shifted from 'finding links' to 'synthesizing answers.' According to **Gartner (2024)**, traditional search volume has seen a **25% decline** by 2026 as users pivot to AI Agents.
     """)
 
-    # --- SECTION 1: THE SEARCH CLIFF (Citations) ---
-    st.markdown("### 1. Why GEO Matters Now")
-    col1, col2 = st.columns(2)
+    st.markdown("---")
+    
+    col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.info("""
-        **The "Zero-Click" Reality** As of 2026, traditional search volume has dropped by **25%** (Gartner). Users are moving to 
-        'Answer Engines' like Perplexity, Gemini Live, and SearchGPT that synthesize info directly.
-        """)
-    
+        st.subheader("🌐 Share of Model (SoM)")
+        st.write("The new 'Share of Voice.' It measures how often an LLM mentions your brand when prompted for a category (e.g., 'Best eco-friendly running shoes').")
+        
     with col2:
-        st.success("""
-        **The Citation Advantage** Research from *Seer Interactive (2025)* shows that brands cited in AI Overviews earn 
-        **35% higher organic CTR** than those that are merely listed in the links below the fold.
-        """)
+        st.subheader("📊 Fact-Density")
+        st.write("AI favors content with high information gain. **BrightEdge (2025)** reports that cited content has **4x more unique data points** than uncited content.")
+        
+    with col3:
+        st.subheader("🛡️ E-E-A-T & Citations")
+        st.write("Models verify facts via 'Seed Sites' (Reddit, Wikipedia, Tier-1 News). If your brand isn't talked about there, the AI won't trust you.")
 
-    st.divider()
-
-    # --- SECTION 2: THE THREE PILLARS ---
-    st.markdown("### 2. The Facets of GEO")
     
-    pillar_tabs = st.tabs(["✍️ Content Strategy", "⚙️ Technical Signal", "🛡️ Trust & E-E-A-T"])
-    
-    with pillar_tabs[0]:
-        st.markdown("#### Fact-Density & 'Answer-First' Design")
-        st.write("""
-        AI models prioritize **Information Gain**. If your content just repeats what's already 
-        on the web, the LLM has no reason to cite you. 
-        * **Strategy:** Use specific data (e.g., '14% increase' vs 'a large increase').
-        * **Structure:** Place 'TL;DR' summaries at the top of pages for easy machine extraction.
-        """)
 
-    with pillar_tabs[1]:
-        st.markdown("#### Machine-Readable Architecture")
-        st.write("""
-        If an AI crawler can't parse your site in milliseconds, you are invisible.
-        * **Entity Schema:** Use JSON-LD to define your brand as a 'Named Entity.'
-        * **llms.txt:** The 2026 standard for telling AI models which parts of your site to prioritize.
-        """)
-
-    with pillar_tabs[2]:
-        st.markdown("#### Off-Site Authority (The Reddit Effect)")
-        st.write("""
-        LLMs verify your claims by looking at 'Seed Sites.' 
-        * **The Fact:** Over **40% of AI citations** in 2025/2026 come from community discussions (Reddit, Quora) and PR-driven coverage (Search Engine Journal).
-        * **Goal:** You must exist where the model's training data 'learns' about trust.
-        """)
-
-# --- PAGE 2: AUDIT TOOL (Same logic as previous, but in a clean block) ---
+# --- PAGE 2: AUDIT TOOL ---
 elif page == "🔬 Brand Audit Tool":
-    st.title("🔬 Brand GEO Audit")
-    # (Insert your Audit Tool code here - see previous response for logic)
+    st.title("🔬 Competitive Brand GEO Audit")
+    st.markdown("Benchmark your brand's AI visibility against your primary competitor.")
+    
+    # --- INPUT SECTION ---
+    with st.container():
+        col_a, col_b = st.columns(2)
+        with col_a:
+            brand_name = st.text_input("Your Brand Name", placeholder="e.g. Patagonia")
+            market = st.selectbox("Market Focus", ["Global", "North America", "Europe", "APAC"])
+        with col_b:
+            competitor_name = st.text_input("Main Competitor", placeholder="e.g. The North Face")
+    
+    if st.button("Run Comparative Audit", type="primary"):
+        if not brand_name or not competitor_name:
+            st.warning("Please enter both your brand and a competitor to run the analysis.")
+        else:
+            with st.spinner(f"Analyzing {brand_name} vs {competitor_name} in the {market} market..."):
+                
+                # Enhanced Prompt for Scoring and Diagnostics
+                prompt = f"""
+                Act as a Senior GEO Strategist in 2026. Perform a competitive audit for '{brand_name}' vs '{competitor_name}' in '{market}'.
+                
+                REQUIRED SECTIONS:
+                1. **GEO Scorecard Table**: Compare both brands (Score 1-100) on:
+                   - Share of Model (SoM)
+                   - Citation Frequency
+                   - Technical Schema Accuracy
+                   - Information Gain (Fact Density)
+                
+                2. **The "Why" Diagnostic**: For any category where '{brand_name}' scores lower than '{competitor_name}', 
+                   provide a specific reason (e.g., 'Missing Product JSON-LD', 'Low Reddit Sentiment', 'Vague Marketing Prose').
+                
+                3. **Strategic Gap Analysis**: What is the #1 thing '{brand_name}' must do to steal 'Share of Model' from '{competitor_name}'?
+                """
+                
+                try:
+                    response = client.chat.completions.create(
+                        model="sonar-pro",
+                        messages=[
+                            {"role": "system", "content": "Provide professional, data-backed GEO audits with Markdown tables."},
+                            {"role": "user", "content": prompt}
+                        ]
+                    )
+                    st.markdown(response.choices[0].message.content)
+                except Exception as e:
+                    st.error(f"Audit failed: {e}")
+
+st.sidebar.divider()
+st.sidebar.caption("Powered by Perplexity Sonar-Pro • 2026 Index")
